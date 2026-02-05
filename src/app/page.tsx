@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 import { WorkoutDay, Exercise } from '@/types/exercise'
 import { Navbar } from '@/components/navbar'
 import { ExerciseCard } from '@/components/exercise-card'
@@ -9,12 +8,53 @@ import { ExerciseDetailDialog } from '@/components/exercise-detail-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Dumbbell, Calendar, Clock } from 'lucide-react'
+import Image from 'next/image'
+
+// FIXED: Typewriter animation hook
+function useTypewriter(texts: string[], period = 3000) {
+  const [displayText, setDisplayText] = useState('')
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    const currentFullText = texts[currentIndex]
+    
+    // Determine the speed based on current state
+    let typeSpeed = isDeleting ? 50 : 100 + Math.random() * 100
+
+    if (!isDeleting && displayText === currentFullText) {
+      // Finished typing the word, pause before deleting
+      typeSpeed = period
+    } else if (isDeleting && displayText === '') {
+      // Finished deleting, small pause before typing next word
+      typeSpeed = 500
+    }
+
+    const timer = setTimeout(() => {
+      if (!isDeleting && displayText === currentFullText) {
+        setIsDeleting(true)
+      } else if (isDeleting && displayText === '') {
+        setIsDeleting(false)
+        setCurrentIndex((prev) => (prev + 1) % texts.length)
+      } else {
+        setDisplayText(currentFullText.substring(0, displayText.length + (isDeleting ? -1 : 1)))
+      }
+    }, typeSpeed)
+
+    return () => clearTimeout(timer)
+  }, [displayText, isDeleting, currentIndex, texts, period])
+
+  return displayText
+}
 
 export default function Home() {
   const [workoutDays, setWorkoutDays] = useState<WorkoutDay[]>([])
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  // Typewriter effect for heading
+  const headingText = useTypewriter(['Hey Abdul', 'Gym Yuk', 'Jangan Malas Ya'], 3000)
 
   useEffect(() => {
     fetchWorkouts()
@@ -56,8 +96,8 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-12">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="mb-12 text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
             <Image 
               src="/assets/gyj.png"
               alt="Gym logo"
@@ -66,11 +106,12 @@ export default function Home() {
               className="rounded" 
               />
             <h1 className="text-4xl font-bold font-['Consolas',monospace]">
-              Nge-Gym Bang
+              {headingText}
+              <span className="inline-block w-0.5 h-8 bg-primary ml-1 animate-blink"></span>
             </h1>
           </div>
-          <p className="text-muted-foreground text-sm">
-            fun-fact: GYJ love thick back muscles
+          <p className="text-muted-foreground text-sm animate-fade-in">
+            Fun fact: GYJ loves thick back muscles!
           </p>
         </div>
 
